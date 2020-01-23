@@ -72,7 +72,7 @@ public class RemoveScoresFromUnrankedBeatmapsTask extends CronTask {
 					if (invalidScores.contains(score))
 						continue;
 					if (score.beatmap_md5.equals(beatmap.beatmap_md5)) {
-						if (beatmap.ranked <= 0 || beatmap.ranked >= 4) {
+						if (beatmap.ranked <= 0 || beatmap.ranked >= 6) {
 							invalidScores.add(score);
 						}
 					}
@@ -117,7 +117,7 @@ public class RemoveScoresFromUnrankedBeatmapsTask extends CronTask {
 					if (invalidScores_relax.contains(score))
 						continue;
 					if (score.beatmap_md5.equals(beatmap.beatmap_md5)) {
-						if (beatmap.ranked <= 0 || beatmap.ranked >= 4) {
+						if (beatmap.ranked <= 0 || beatmap.ranked >= 6) {
 							invalidScores_relax.add(score);
 						}
 					}
@@ -159,7 +159,7 @@ public class RemoveScoresFromUnrankedBeatmapsTask extends CronTask {
 					if (invalidScores_auto.contains(score))
 						continue;
 					if (score.beatmap_md5.equals(beatmap.beatmap_md5)) {
-						if (beatmap.ranked <= 0 || beatmap.ranked >= 4) {
+						if (beatmap.ranked <= 0 || beatmap.ranked >= 6) {
 							invalidScores_auto.add(score);
 						}
 					}
