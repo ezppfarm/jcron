@@ -1,5 +1,5 @@
 # jcron
-a cron to:
+a cron for ripple to:
 - cache topplays
 - recalculate pp
 - recalculate ranks
