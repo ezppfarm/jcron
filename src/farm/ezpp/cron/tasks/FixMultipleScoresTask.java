@@ -2,7 +2,10 @@ package farm.ezpp.cron.tasks;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 import com.mysql.jdbc.PreparedStatement;
 import com.mysql.jdbc.Statement;
@@ -25,7 +28,6 @@ public class FixMultipleScoresTask extends CronTask {
 
 	@Override
 	public void task() {
-		
 		if (CronExecutor.isVanilla()) {
 			doVanilla();
 		} else if (CronExecutor.isRelax()) {
@@ -38,7 +40,6 @@ public class FixMultipleScoresTask extends CronTask {
 	}
 
 	public void doVanilla() {
-		int count = 0;
 		Logger.log("fixing multiple vanilla scores: ", true, true);
 		try {
 			Statement s = (Statement) MySQLAPI.getInstance().getConnection().createStatement();
@@ -57,19 +58,29 @@ public class FixMultipleScoresTask extends CronTask {
 			}
 
 			for (Score i : scores) {
-				if (scores_duplicate.contains(i))
+				List<Score> scoresss = scores.stream().filter(score -> score.beatmap_md5.equals(i.beatmap_md5) && score.userid == i.userid && !scores_duplicate.contains(score)).collect(Collectors.toList());
+				if (scoresss.size() < 1)
 					continue;
-				for (Score j : scores) {
-					if (j.id != i.id && j.beatmap_md5.equals(i.beatmap_md5) && j.userid == i.userid && j.play_mode == i.play_mode && j.score == i.score && j.mods == i.mods && j.max_combo == i.max_combo && j.accuracy == i.accuracy) {
+				Score highest = new Score(0, 0, "", 0, 0, 0, 0, 0, 0);
+
+				for (Score scoress : scoresss) {
+					if (scoress.pp >= highest.pp) {
+						highest = scoress;
+					}
+				}
+
+				if (scoresss.size() - 1 > 1) {
+					for (Score rem : scoresss) {
+						if (rem.id == highest.id)
+							continue;
 						PreparedStatement ps = (PreparedStatement) MySQLAPI.getInstance().getConnection().prepareStatement("INSERT INTO `scores_duplicates` SELECT * FROM `scores` WHERE id = ? LIMIT 1");
-						ps.setInt(1, j.id);
+						ps.setInt(1, rem.id);
 						ps.execute();
 
 						PreparedStatement ps2 = (PreparedStatement) MySQLAPI.getInstance().getConnection().prepareStatement("DELETE FROM `scores` WHERE id = ? LIMIT 1");
-						ps2.setInt(1, j.id);
+						ps2.setInt(1, rem.id);
 						ps2.execute();
-						scores_duplicate.add(j);
-						count++;
+						scores_duplicate.add(rem);
 					}
 				}
 			}
@@ -78,7 +89,7 @@ public class FixMultipleScoresTask extends CronTask {
 			markDone();
 		}
 		Logger.log("done!", false, false);
-		Logger.log("fixed " + count + " vanilla score duplicates", true, false);
+		Logger.log("fixed " + scores_duplicate.size() + " vanilla score duplicates", true, false);
 		if (CronExecutor.isRelax()) {
 			doRelax();
 		} else if (CronExecutor.isAuto()) {
@@ -89,10 +100,8 @@ public class FixMultipleScoresTask extends CronTask {
 	}
 
 	public void doRelax() {
-		int count = 0;
 		Logger.log("fixing multiple relax scores: ", true, true);
 		try {
-			
 			Statement s = (Statement) MySQLAPI.getInstance().getConnection().createStatement();
 			ResultSet rs = s.executeQuery("SELECT `id`, `beatmap_md5`, `userid`, `score`, `max_combo`, `mods`, `play_mode`, `accuracy`, `pp` FROM `scores_relax` WHERE completed = 3");
 			while (rs.next()) {
@@ -109,19 +118,29 @@ public class FixMultipleScoresTask extends CronTask {
 			}
 
 			for (Score i : scores_relax) {
-				if (scores_relax_duplicate.contains(i))
+				List<Score> scoresss = scores_relax.stream().filter(score -> score.beatmap_md5.equals(i.beatmap_md5) && score.userid == i.userid && !scores_relax_duplicate.contains(score)).collect(Collectors.toList());
+				if (scoresss.size() < 1)
 					continue;
-				for (Score j : scores_relax) {
-					if (j.id != i.id && j.beatmap_md5.equals(i.beatmap_md5) && j.userid == i.userid && j.play_mode == i.play_mode && j.score == i.score && j.mods == i.mods && j.max_combo == i.max_combo && j.accuracy == i.accuracy) {
+				Score highest = new Score(0, 0, "", 0, 0, 0, 0, 0, 0);
+
+				for (Score scoress : scoresss) {
+					if (scoress.pp >= highest.pp) {
+						highest = scoress;
+					}
+				}
+
+				if (scoresss.size() - 1 > 1) {
+					for (Score rem : scoresss) {
+						if (rem.id == highest.id)
+							continue;
 						PreparedStatement ps = (PreparedStatement) MySQLAPI.getInstance().getConnection().prepareStatement("INSERT INTO `scores_relax_duplicates` SELECT * FROM `scores_relax` WHERE id = ? LIMIT 1");
-						ps.setInt(1, j.id);
+						ps.setInt(1, rem.id);
 						ps.execute();
 
 						PreparedStatement ps2 = (PreparedStatement) MySQLAPI.getInstance().getConnection().prepareStatement("DELETE FROM `scores_relax` WHERE id = ? LIMIT 1");
-						ps2.setInt(1, j.id);
+						ps2.setInt(1, rem.id);
 						ps2.execute();
-						scores_relax_duplicate.add(j);
-						count++;
+						scores_relax_duplicate.add(rem);
 					}
 				}
 			}
@@ -130,7 +149,7 @@ public class FixMultipleScoresTask extends CronTask {
 			markDone();
 		}
 		Logger.log("done!", false, false);
-		Logger.log("fixed " + count + " relax score duplicates", true, false);
+		Logger.log("fixed " + scores_relax_duplicate.size() + " relax score duplicates", true, false);
 		if (CronExecutor.isAuto()) {
 			doAuto();
 		} else {
@@ -139,7 +158,6 @@ public class FixMultipleScoresTask extends CronTask {
 	}
 
 	public void doAuto() {
-		int count = 0;
 		Logger.log("fixing multiple auto scores: ", true, true);
 		try {
 			Statement s = (Statement) MySQLAPI.getInstance().getConnection().createStatement();
@@ -154,23 +172,33 @@ public class FixMultipleScoresTask extends CronTask {
 				int play_mode = rs.getInt("play_mode");
 				float accuracy = rs.getInt("accuracy");
 				int pp = rs.getInt("pp");
-				scores_relax.add(new Score(id, userid, beatmap_md5, play_mode, score, mods, max_combo, accuracy, pp));
+				scores_auto.add(new Score(id, userid, beatmap_md5, play_mode, score, mods, max_combo, accuracy, pp));
 			}
 
 			for (Score i : scores_auto) {
-				if (scores_auto_duplicate.contains(i))
+				List<Score> scoresss = scores_auto.stream().filter(score -> score.beatmap_md5.equals(i.beatmap_md5) && score.userid == i.userid && !scores_auto_duplicate.contains(score)).collect(Collectors.toList());
+				if (scoresss.size() < 1)
 					continue;
-				for (Score j : scores_auto) {
-					if (j.id != i.id && j.beatmap_md5.equals(i.beatmap_md5) && j.userid == i.userid && j.play_mode == i.play_mode && j.score == i.score && j.mods == i.mods && j.max_combo == i.max_combo && j.accuracy == i.accuracy && j.pp == i.pp) {
+				Score highest = new Score(0, 0, "", 0, 0, 0, 0, 0, 0);
+
+				for (Score scoress : scoresss) {
+					if (scoress.pp >= highest.pp) {
+						highest = scoress;
+					}
+				}
+
+				if (scoresss.size() - 1 > 1) {
+					for (Score rem : scoresss) {
+						if (rem.id == highest.id)
+							continue;
 						PreparedStatement ps = (PreparedStatement) MySQLAPI.getInstance().getConnection().prepareStatement("INSERT INTO `scores_auto_duplicates` SELECT * FROM `scores_auto` WHERE id = ? LIMIT 1");
-						ps.setInt(1, j.id);
+						ps.setInt(1, rem.id);
 						ps.execute();
 
 						PreparedStatement ps2 = (PreparedStatement) MySQLAPI.getInstance().getConnection().prepareStatement("DELETE FROM `scores_auto` WHERE id = ? LIMIT 1");
-						ps2.setInt(1, j.id);
+						ps2.setInt(1, rem.id);
 						ps2.execute();
-						scores_auto_duplicate.add(j);
-						count++;
+						scores_auto_duplicate.add(rem);
 					}
 				}
 			}
@@ -179,8 +207,9 @@ public class FixMultipleScoresTask extends CronTask {
 			markDone();
 		}
 		Logger.log("done!", false, false);
-		Logger.log("fixed " + count + " auto score duplicates", true, false);
+		Logger.log("fixed " + scores_auto_duplicate.size() + " auto score duplicates", true, false);
 		markDone();
+
 	}
 
 	public class Score {
