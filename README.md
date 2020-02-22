@@ -19,7 +19,7 @@ a cron for ripple to:
 
 [rzwitserloot/lombok](https://bitbucket.org/rzwitserloot/lombok) **MIT**
 
-[https://github.com/SpigotMC/BungeeCord](https://bitbucket.org/https://github.com/SpigotMC/BungeeCord) _(configsystem)_ **MIT**
+[SpigotMC/BungeeCord](https://github.com/SpigotMC/BungeeCord) _(configsystem)_ **MIT**
 
 # Lang
 - Java
